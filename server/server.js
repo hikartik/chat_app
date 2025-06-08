@@ -7,14 +7,21 @@ import messageRouter from "./routes/messageRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import { Server } from "socket.io";
 
-// Create Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
 
-// Initialize socket.io server, allowing CORS from any origin
+// Only allow your front-end origin
+const CLIENT_URL =
+  process.env.CLIENT_URL || "https://chat-app-6fiu.vercel.app";
+
+// Initialize socket.io with CORS restricted to your client
 export const io = new Server(server, {
-  cors: { origin: "*" },
+  cors: {
+    origin: CLIENT_URL,
+    credentials: true,
+  },
 });
+
 
 // Store online users as { userId: socketId }
 export const userSocketMap = {};
@@ -47,7 +54,15 @@ io.on("connection", (socket) => {
 
 // Middleware setup
 app.use(express.json({ limit: "4mb" }));
-app.use(cors());
+app.use(
+  cors({
+    origin: CLIENT_URL,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
+// handle preflight requests
+app.options("*", cors());
 
 // Routes
 app.use("/api/status", (req, res) => res.send("Server is live"));

@@ -7,21 +7,14 @@ import messageRouter from "./routes/messageRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import { Server } from "socket.io";
 
+// Create Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
 
-// Only allow your front-end origin
-const CLIENT_URL =
-  process.env.CLIENT_URL || "https://chat-app-6fiu.vercel.app";
-
-// Initialize socket.io with CORS restricted to your client
+// Initialize socket.io server, allowing CORS from any origin
 export const io = new Server(server, {
-  cors: {
-    origin: CLIENT_URL,
-    credentials: true,
-  },
+  cors: { origin: "*" },
 });
-
 
 // Store online users as { userId: socketId }
 export const userSocketMap = {};
@@ -54,15 +47,7 @@ io.on("connection", (socket) => {
 
 // Middleware setup
 app.use(express.json({ limit: "4mb" }));
-app.use(
-  cors({
-    origin: CLIENT_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  })
-);
-// handle preflight requests
-app.options("*", cors());
+app.use(cors());
 
 // Routes
 app.use("/api/status", (req, res) => res.send("Server is live"));
@@ -72,9 +57,7 @@ app.use("/api/messages", messageRouter);
 // Connect to MongoDB and start listening
 await connectDB();
 
-if(process.env.NODE_ENV!=="production"){
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log("Server is running on port:", PORT));
-}
-//export server for vercel
-export default server;
+
